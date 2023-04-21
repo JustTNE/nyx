@@ -1,0 +1,73 @@
+name: Deploy to nyxpkgs-unstable
+
+on:
+  # Trigger this workflow when needed
+    workflow_call:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Nix
+        uses: cachix/install-nix-action@v20
+        with:
+          extra_nix_config: "accept-flake-config = true"
+      - uses: actions/checkout@v3
+      - name: Build packages
+        run: nix develop -c build-chaotic-nyx && exit 1 || [ $? -eq 23 ]
+        env:
+          NYX_WD: ${{ runner.temp }}
+      - name: Install Cachix
+        uses: cachix/cachix-action@v12
+        with:
+          name: chaotic-nyx
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+          skipPush: true
+      - name: Upload to cachix
+        run: |
+          pushd "${{ runner.temp }}"
+          cat push.txt | cachix push chaotic-nyx \
+            --compression-method zstd
+          popd
+      - name: Push to nyxpkgs-unstable
+        id: push
+        run: |
+          set -e
+          git config --global user.name 'Github Actions'
+          git config --global user.email 'actions@chaotic.cx'
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+          failed_builds="$(cat ${{ runner.temp }}/failures.txt | sed 's/^/    <li>/; s/$/<\/li>/')"
+          failed_builds_count="$(cat ${{ runner.temp }}/failures.txt | wc -l)"
+          git push -f origin nyxpkgs-unstable
+          echo "COMMIT_ID=$(git rev-parse HEAD)
+          FAILED_BUILDS_COUNT=$failed_builds_count
+          FAILED_BUILDS<<EOF
+          $failed_builds
+          EOF" >> $GITHUB_OUTPUT
+      - name: Comment on commit
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: process.env.COMMIT_ID,
+              body: `<details>
+              <summary>${process.env.FAILED_BUILDS_COUNT} packages failed</summary>
+              <ul>
+                ${process.env.FAILED_BUILDS}
+              </ul>
+            </details>
+              `
+            })
+        env:
+          COMMIT_ID: ${{ steps.push.outputs.COMMIT_ID }}
+          FAILED_BUILDS_COUNT: ${{ steps.push.outputs.FAILED_BUILDS_COUNT }}
+          FAILED_BUILDS: ${{ steps.push.outputs.FAILED_BUILDS }}
