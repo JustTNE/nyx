@@ -17,4 +17,6 @@ in
   inherit nyxUtils;
 
   ananicy-cpp-rules = final.callPackage ../pkgs/ananicy-cpp-rules { };
+
+  applet-window-appmenu = final.libsForQt5.callPackage ../pkgs/applet-window-appmenu { };
 }
