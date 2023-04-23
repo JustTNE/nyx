@@ -26,7 +26,7 @@ in
 
   ananicy-cpp-rules = final.callPackage ../pkgs/ananicy-cpp-rules { };
 
-  applet-window-appmenu = final.libsForQt5.callPackage ../pkgs/applet-window-appmenu { };
+    applet-window-appmenu = final.libsFasasorQt5.callPackage ../pkgs/applet-window-appmenu { };
 
   applet-window-title = final.callPackage ../pkgs/applet-window-title { };
 
