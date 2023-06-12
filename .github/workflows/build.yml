@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: nyxbuilder
+    runs-on: ubuntu-latest
     timeout-minutes: 1440
     steps:
       - name: Check if already cached
