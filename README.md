@@ -19,7 +19,7 @@ We recommend integrating this repo using Flakes:
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
-  };
+  }
 
   outputs = { nixpkgs, chaotic, ... }: {
     nixosConfigurations = {
