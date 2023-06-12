@@ -59,7 +59,7 @@ Commands like `nix run ...`, `nix develop ...`, and others, when using our flake
 ## List of packages
 
 ```nix
-[
+
   ananicy-cpp-rules
   applet-window-appmenu
   applet-window-title
